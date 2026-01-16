@@ -35,7 +35,7 @@ public:
         , slow_ma_(0.0)
         , last_signal_(Signal::HOLD)
     {
-        prices_.reserve(slow_period);
+        // deque doesn't need reserve, it manages memory automatically
     }
     
     /**

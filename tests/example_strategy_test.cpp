@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <iomanip>
+#include <chrono>
 #include "../core/include/market_data.h"
 #include "../core/include/indicators.h"
 #include "../core/include/strategy.h"
