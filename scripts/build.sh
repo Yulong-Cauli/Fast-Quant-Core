@@ -16,7 +16,7 @@ command -v python3 >/dev/null 2>&1 || { echo "错误: 需要安装 python3"; exi
 # 安装 pybind11（如果需要）
 if ! python3 -c "import pybind11" 2>/dev/null; then
     echo "安装 pybind11..."
-    pip3 install pybind11[global]
+    pip3 install --user pybind11[global]
 fi
 
 # 创建构建目录

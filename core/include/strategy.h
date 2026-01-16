@@ -5,6 +5,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <numeric>
 
 namespace fastquant {
 
