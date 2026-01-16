@@ -1,0 +1,4 @@
+fastquant-cpp>=0.1.0
+python-binance>=1.0.17
+pyyaml>=6.0
+pybind11>=2.10.0
