@@ -37,8 +37,7 @@ RUN apt-get update && apt-get install -y \
 # 创建应用目录
 WORKDIR /app
 
-# 从构建阶段复制编译产物
-COPY --from=builder /app/build/lib/*.so /app/app/
+# 从构建阶段复制编译产物和应用代码
 COPY --from=builder /app/app /app/app
 COPY --from=builder /app/config /app/config
 

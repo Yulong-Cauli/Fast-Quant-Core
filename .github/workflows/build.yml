@@ -35,12 +35,14 @@ jobs:
       run: |
         cd build/bin
         ./example_strategy_test
+        ./test_indicators_optimization
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cpp-bindings
-        path: build/lib/*.so
+        path: app/*.so
+        if-no-files-found: warn
 
   test-python:
     name: Test Python Integration
@@ -56,7 +58,7 @@ jobs:
         python-version: '3.9'
     
     - name: Download C++ artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: cpp-bindings
         path: app/
