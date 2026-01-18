@@ -1,0 +1,99 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-cpp:
+    name: Build C++ Core
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake python3 python3-pip python3-dev
+        pip3 install pybind11[global]
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --parallel $(nproc)
+    
+    - name: Run example test
+      run: |
+        cd build/bin
+        ./example_strategy_test
+        ./test_indicators_optimization
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpp-bindings
+        path: |
+          app/*.so
+        if-no-files-found: warn
+
+  test-python:
+    name: Test Python Integration
+    runs-on: ubuntu-latest
+    needs: build-cpp
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Download C++ artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: cpp-bindings
+        path: app/
+    
+    - name: Verify artifact download
+      run: |
+        echo "Contents of app/ directory:"
+        ls -la app/
+        echo "Looking for .so files:"
+        find app/ -name "*.so"
+    
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Run Python tests
+      run: |
+        export PYTHONPATH="${PYTHONPATH}:${PWD}"
+        python3 -c "import sys; sys.path.insert(0, 'app'); import fastquant_cpp; print('C++ module loaded successfully')"
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: |
+        docker build -t fastquant-core:latest .
+    
+    - name: Test Docker image
+      run: |
+        docker run --rm fastquant-core:latest python3 --version
