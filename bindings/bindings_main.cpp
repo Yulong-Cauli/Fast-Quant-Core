@@ -60,16 +60,19 @@ PYBIND11_MODULE(fastquant_cpp, m) {
     // ==================== 指标计算器 ====================
     py::class_<Indicators>(m, "Indicators")
         .def_static("SMA", &Indicators::SMA,
-                   "计算简单移动平均",
+                   "计算简单移动平均 (O(n) 滑动窗口)",
                    py::arg("data"), py::arg("period"))
         .def_static("EMA", &Indicators::EMA,
                    "计算指数移动平均",
                    py::arg("data"), py::arg("period"))
         .def_static("StdDev", &Indicators::StdDev,
-                   "计算标准差",
+                   "计算标准差（单窗口）",
                    py::arg("data"))
+        .def_static("RollingStdDev", &Indicators::RollingStdDev,
+                   "计算滚动标准差 (O(n) 滑动窗口优化)",
+                   py::arg("data"), py::arg("period"))
         .def_static("BollingerBands", &Indicators::BollingerBands,
-                   "计算布林带",
+                   "计算布林带 (O(n) 优化版本)",
                    py::arg("data"), py::arg("period"), 
                    py::arg("std_dev_multiplier") = 2.0);
     

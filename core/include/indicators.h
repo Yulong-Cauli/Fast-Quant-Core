@@ -4,6 +4,8 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
+#include <optional>
+#include <limits>
 
 namespace fastquant {
 
@@ -11,6 +13,7 @@ namespace fastquant {
  * @brief 技术指标计算器
  * 
  * 展示 C++ STL 和算法能力的核心模块
+ * 优化重点：O(n) 滑动窗口算法，避免容器拷贝
  */
 class Indicators {
 public:
@@ -20,13 +23,23 @@ public:
      * 使用滑动窗口算法，时间复杂度 O(n)
      * 
      * @param data 价格序列
-     * @param period 周期
-     * @return 移动平均值序列
+     * @param period 周期，必须 > 0 且 <= data.size()
+     * @return 移动平均值序列，如果参数非法返回空
      */
     static std::vector<double> SMA(const std::vector<double>& data, int period) {
         std::vector<double> result;
-        if (data.size() < static_cast<size_t>(period) || period <= 0) {
+        
+        // 严格边界检查
+        if (period <= 0 || data.empty() || 
+            static_cast<size_t>(period) > data.size()) {
             return result;
+        }
+        
+        // 检查数据有效性（避免 NaN/Inf）
+        for (const auto& value : data) {
+            if (!std::isfinite(value)) {
+                return result;
+            }
         }
         
         result.reserve(data.size() - period + 1);
@@ -35,7 +48,7 @@ public:
         double sum = std::accumulate(data.begin(), data.begin() + period, 0.0);
         result.push_back(sum / period);
         
-        // 滑动窗口：移除最老的，加入最新的
+        // 滑动窗口：O(1) 增量更新
         for (size_t i = period; i < data.size(); ++i) {
             sum = sum - data[i - period] + data[i];
             result.push_back(sum / period);
@@ -48,13 +61,23 @@ public:
      * @brief 指数移动平均 (Exponential Moving Average)
      * 
      * @param data 价格序列
-     * @param period 周期
-     * @return EMA 值序列
+     * @param period 周期，必须 > 0 且 <= data.size()
+     * @return EMA 值序列，如果参数非法返回空
      */
     static std::vector<double> EMA(const std::vector<double>& data, int period) {
         std::vector<double> result;
-        if (data.empty() || period <= 0) {
+        
+        // 严格边界检查
+        if (period <= 0 || data.empty() || 
+            static_cast<size_t>(period) > data.size()) {
             return result;
+        }
+        
+        // 检查数据有效性
+        for (const auto& value : data) {
+            if (!std::isfinite(value)) {
+                return result;
+            }
         }
         
         result.reserve(data.size());
@@ -62,11 +85,11 @@ public:
         
         // 第一个 EMA 值使用 SMA
         double ema = std::accumulate(data.begin(), 
-                                     data.begin() + std::min(period, static_cast<int>(data.size())),
-                                     0.0) / std::min(period, static_cast<int>(data.size()));
+                                     data.begin() + period,
+                                     0.0) / period;
         result.push_back(ema);
         
-        // 后续 EMA 值
+        // 后续 EMA 值：递推计算
         for (size_t i = 1; i < data.size(); ++i) {
             ema = (data[i] - ema) * multiplier + ema;
             result.push_back(ema);
@@ -76,7 +99,7 @@ public:
     }
     
     /**
-     * @brief 标准差计算
+     * @brief 标准差计算（单窗口版本，用于向后兼容）
      * 
      * @param data 数据序列
      * @return 标准差
@@ -86,19 +109,90 @@ public:
             return 0.0;
         }
         
-        double mean = std::accumulate(data.begin(), data.end(), 0.0) / data.size();
-        double variance = 0.0;
+        // 使用 Welford's online algorithm 提高数值稳定性
+        double mean = 0.0;
+        double m2 = 0.0;
+        size_t count = 0;
         
         for (const auto& value : data) {
-            double diff = value - mean;
-            variance += diff * diff;
+            if (!std::isfinite(value)) {
+                return 0.0;
+            }
+            count++;
+            double delta = value - mean;
+            mean += delta / count;
+            double delta2 = value - mean;
+            m2 += delta * delta2;
         }
         
-        return std::sqrt(variance / data.size());
+        if (count < 2) {
+            return 0.0;
+        }
+        
+        return std::sqrt(m2 / count);
     }
     
     /**
-     * @brief 布林带计算
+     * @brief 滚动标准差计算（O(n) 复杂度）
+     * 
+     * 使用滑动窗口维护 sum(x) 和 sum(x²)，利用公式：
+     * σ² = E[X²] - (E[X])² = (sum(x²)/n) - (sum(x)/n)²
+     * 
+     * @param data 价格序列
+     * @param period 周期
+     * @return 每个窗口的标准差序列
+     */
+    static std::vector<double> RollingStdDev(const std::vector<double>& data, int period) {
+        std::vector<double> result;
+        
+        if (period <= 0 || data.empty() || 
+            static_cast<size_t>(period) > data.size()) {
+            return result;
+        }
+        
+        // 检查数据有效性
+        for (const auto& value : data) {
+            if (!std::isfinite(value)) {
+                return result;
+            }
+        }
+        
+        result.reserve(data.size() - period + 1);
+        
+        // 初始化第一个窗口的 sum(x) 和 sum(x²)
+        double sum_x = 0.0;
+        double sum_x2 = 0.0;
+        
+        for (int i = 0; i < period; ++i) {
+            sum_x += data[i];
+            sum_x2 += data[i] * data[i];
+        }
+        
+        // 计算第一个窗口的标准差
+        double mean = sum_x / period;
+        double variance = (sum_x2 / period) - (mean * mean);
+        result.push_back(std::sqrt(std::max(0.0, variance)));  // 避免负数（浮点误差）
+        
+        // 滑动窗口：O(1) 更新 sum(x) 和 sum(x²)
+        for (size_t i = period; i < data.size(); ++i) {
+            double old_val = data[i - period];
+            double new_val = data[i];
+            
+            sum_x = sum_x - old_val + new_val;
+            sum_x2 = sum_x2 - (old_val * old_val) + (new_val * new_val);
+            
+            mean = sum_x / period;
+            variance = (sum_x2 / period) - (mean * mean);
+            result.push_back(std::sqrt(std::max(0.0, variance)));
+        }
+        
+        return result;
+    }
+    
+    /**
+     * @brief 布林带计算（优化到 O(n) 复杂度）
+     * 
+     * 使用滑动窗口同时计算 SMA 和滚动标准差，避免重复计算和临时容器创建
      * 
      * @param data 价格序列
      * @param period 周期
@@ -107,24 +201,63 @@ public:
      */
     static std::tuple<std::vector<double>, std::vector<double>, std::vector<double>> 
     BollingerBands(const std::vector<double>& data, int period, double std_dev_multiplier = 2.0) {
-        auto middle = SMA(data, period);
-        std::vector<double> upper, lower;
+        std::vector<double> upper, middle, lower;
         
-        if (middle.empty()) {
+        // 边界检查
+        if (period <= 0 || data.empty() || 
+            static_cast<size_t>(period) > data.size() ||
+            std_dev_multiplier < 0) {
             return {upper, middle, lower};
         }
         
-        upper.reserve(middle.size());
-        lower.reserve(middle.size());
+        // 检查数据有效性
+        for (const auto& value : data) {
+            if (!std::isfinite(value)) {
+                return {upper, middle, lower};
+            }
+        }
         
-        for (size_t i = 0; i < middle.size(); ++i) {
-            size_t start = i;
-            size_t end = i + period;
-            std::vector<double> window(data.begin() + start, data.begin() + end);
-            double std_dev = StdDev(window);
+        size_t result_size = data.size() - period + 1;
+        upper.reserve(result_size);
+        middle.reserve(result_size);
+        lower.reserve(result_size);
+        
+        // 初始化第一个窗口：同时维护 sum(x) 和 sum(x²)
+        double sum_x = 0.0;
+        double sum_x2 = 0.0;
+        
+        for (int i = 0; i < period; ++i) {
+            sum_x += data[i];
+            sum_x2 += data[i] * data[i];
+        }
+        
+        // 计算第一个窗口的中轨和标准差
+        double mean = sum_x / period;
+        double variance = (sum_x2 / period) - (mean * mean);
+        double std_dev = std::sqrt(std::max(0.0, variance));
+        
+        middle.push_back(mean);
+        upper.push_back(mean + std_dev_multiplier * std_dev);
+        lower.push_back(mean - std_dev_multiplier * std_dev);
+        
+        // 滑动窗口：O(1) 增量更新 sum(x) 和 sum(x²)
+        for (size_t i = period; i < data.size(); ++i) {
+            double old_val = data[i - period];
+            double new_val = data[i];
             
-            upper.push_back(middle[i] + std_dev_multiplier * std_dev);
-            lower.push_back(middle[i] - std_dev_multiplier * std_dev);
+            // 更新累加器
+            sum_x = sum_x - old_val + new_val;
+            sum_x2 = sum_x2 - (old_val * old_val) + (new_val * new_val);
+            
+            // 计算当前窗口的统计量
+            mean = sum_x / period;
+            variance = (sum_x2 / period) - (mean * mean);
+            std_dev = std::sqrt(std::max(0.0, variance));
+            
+            // 存储结果
+            middle.push_back(mean);
+            upper.push_back(mean + std_dev_multiplier * std_dev);
+            lower.push_back(mean - std_dev_multiplier * std_dev);
         }
         
         return {upper, middle, lower};

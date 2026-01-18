@@ -64,6 +64,11 @@ if(BUILD_EXAMPLES)
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/example_strategy_test.cpp
     )
     target_link_libraries(example_strategy_test PRIVATE fastquant_core)
+    
+    add_executable(test_indicators_optimization 
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_indicators_optimization.cpp
+    )
+    target_link_libraries(test_indicators_optimization PRIVATE fastquant_core)
 endif()
 
 # 安装规则
