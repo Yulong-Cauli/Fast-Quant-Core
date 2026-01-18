@@ -41,7 +41,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: cpp-bindings
-        path: app/*.so
+        path: |
+          app/*.so
         if-no-files-found: warn
 
   test-python:
@@ -63,12 +64,20 @@ jobs:
         name: cpp-bindings
         path: app/
     
+    - name: Verify artifact download
+      run: |
+        echo "Contents of app/ directory:"
+        ls -la app/
+        echo "Looking for .so files:"
+        find app/ -name "*.so"
+    
     - name: Install Python dependencies
       run: |
         pip install -r requirements.txt
     
     - name: Run Python tests
       run: |
+        export PYTHONPATH="${PYTHONPATH}:${PWD}"
         python3 -c "import sys; sys.path.insert(0, 'app'); import fastquant_cpp; print('C++ module loaded successfully')"
 
   docker-build:
