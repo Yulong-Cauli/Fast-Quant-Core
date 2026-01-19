@@ -7,6 +7,15 @@ echo "=================================="
 echo "FastQuant 快速启动"
 echo "=================================="
 
+# 检查并激活虚拟环境
+if [ -d "venv" ]; then
+    echo "激活虚拟环境..."
+    source venv/bin/activate
+else
+    echo "警告: 未找到虚拟环境 (venv)"
+    echo "建议运行: ./install_dependencies.sh"
+fi
+
 # 检查配置文件
 if [ ! -f "config/config.yaml" ]; then
     echo "错误: 配置文件不存在"
@@ -26,9 +35,15 @@ if [ ! -f "app/fastquant_cpp"*.so ] && [ ! -f "build/lib/fastquant_cpp"*.so ]; t
     fi
 fi
 
-# 安装 Python 依赖
+# 检查 Python 依赖
 echo "检查 Python 依赖..."
-pip3 install -q -r requirements.txt
+if [ -n "$VIRTUAL_ENV" ]; then
+    # 在虚拟环境中
+    pip install -q -r requirements.txt
+else
+    # 不在虚拟环境中，使用 --user
+    pip3 install -q --user -r requirements.txt
+fi
 
 # 启动程序
 echo ""
