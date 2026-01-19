@@ -8,7 +8,7 @@
 set -e  # Exit on error
 
 echo "====================================================="
-echo "Fast-Quant-Core Dependency Installation (Ubuntu 24.04)"
+echo "Fast-Quant-Core Dependency Installation"
 echo "====================================================="
 echo ""
 

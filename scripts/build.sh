@@ -13,7 +13,7 @@ command -v cmake >/dev/null 2>&1 || { echo "错误: 需要安装 cmake"; exit 1;
 command -v g++ >/dev/null 2>&1 || { echo "错误: 需要安装 g++"; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "错误: 需要安装 python3"; exit 1; }
 
-# 检查 pybind11（优先在 venv 中查找，其次在系统中查找）
+# 检查 pybind11（在当前 Python 环境中，无论是 venv 还是系统）
 if ! python3 -c "import pybind11" 2>/dev/null; then
     echo "错误: 未找到 pybind11"
     echo "请确保已激活虚拟环境或已安装 pybind11:"

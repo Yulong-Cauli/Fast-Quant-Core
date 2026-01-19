@@ -37,7 +37,7 @@ fi
 
 # 检查 Python 依赖
 echo "检查 Python 依赖..."
-pip install -q -r requirements.txt
+python3 -m pip install -q -r requirements.txt
 
 # 启动程序
 echo ""
