@@ -71,19 +71,50 @@ git clone https://github.com/Yulong-Cauli/Fast-Quant-Core.git
 cd Fast-Quant-Core
 ```
 
-#### 2. 编译 C++ 核心库
+#### 2. 安装依赖（推荐）
+
+对于全新的 Ubuntu/Debian 系统，使用一键安装脚本：
+
+```bash
+chmod +x install_dependencies.sh
+./install_dependencies.sh
+```
+
+这将自动安装：
+- C++ 构建工具（build-essential, cmake, git）
+- Python 3 和开发头文件
+- pybind11（带 CMake 支持）
+- Python 依赖（python-binance, pyyaml）
+
+或者手动安装依赖：
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git python3 python3-pip python3-dev
+pip3 install pybind11[global] -r requirements.txt
+```
+
+#### 3. 编译 C++ 核心库
 
 ```bash
 ./scripts/build.sh
 ```
 
+或手动构建：
+
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+cmake --build . --parallel $(nproc)
+```
+
 这将：
-- 安装 pybind11 依赖
 - 编译 C++ 核心库
 - 生成 Python 可导入的 .so 模块
 - 构建示例测试程序
 
-#### 3. 测试核心功能
+#### 4. 测试核心功能
 
 ```bash
 # 运行 C++ 测试程序
@@ -95,7 +126,7 @@ cd Fast-Quant-Core
 - ✅ 双均线策略回测
 - ✅ 性能基准测试
 
-#### 4. 配置交易参数
+#### 5. 配置交易参数
 
 ```bash
 # 复制配置文件模板
@@ -123,7 +154,7 @@ trading:
   max_position: 0.01
 ```
 
-#### 5. 启动交易机器人
+#### 6. 启动交易机器人
 
 ```bash
 # 方式 1: 使用启动脚本
