@@ -2,6 +2,8 @@
 # Fast-Quant-Core Dependency Installation Script
 # This script installs all required dependencies for building and running Fast-Quant-Core
 # Tested on: Ubuntu 24.04 LTS
+#
+# Usage: chmod +x install_dependencies.sh && ./install_dependencies.sh
 
 set -e  # Exit on error
 
@@ -53,7 +55,7 @@ echo ""
 echo "You can now build the project with:"
 echo "  mkdir build && cd build"
 echo "  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON"
-echo "  cmake --build . --parallel \$(nproc)"
+echo "  cmake --build . --parallel $(nproc)"
 echo ""
 echo "To run example tests:"
 echo "  cd build/bin"
