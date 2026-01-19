@@ -13,10 +13,13 @@ command -v cmake >/dev/null 2>&1 || { echo "错误: 需要安装 cmake"; exit 1;
 command -v g++ >/dev/null 2>&1 || { echo "错误: 需要安装 g++"; exit 1; }
 command -v python3 >/dev/null 2>&1 || { echo "错误: 需要安装 python3"; exit 1; }
 
-# 安装 pybind11（如果需要）
+# 检查 pybind11（在当前 Python 环境中，无论是 venv 还是系统）
 if ! python3 -c "import pybind11" 2>/dev/null; then
-    echo "安装 pybind11..."
-    pip3 install --user pybind11[global]
+    echo "错误: 未找到 pybind11"
+    echo "请确保已激活虚拟环境或已安装 pybind11:"
+    echo "  source venv/bin/activate"
+    echo "  pip install pybind11[global]"
+    exit 1
 fi
 
 # 创建构建目录

@@ -80,30 +80,46 @@ chmod +x install_dependencies.sh
 ./install_dependencies.sh
 ```
 
-这将自动安装：
-- C++ 构建工具（build-essential, cmake, git）
-- Python 3 和开发头文件
-- pybind11（带 CMake 支持）
-- Python 依赖（python-binance, pyyaml）
+这将自动：
+- 安装 C++ 构建工具（build-essential, cmake, git）
+- 安装 Python 3 和开发头文件
+- 创建 Python 虚拟环境（venv）
+- 在虚拟环境中安装 pybind11 和 Python 依赖
+- 自动编译 C++ 核心库
+
+**Ubuntu 24.04+ 用户注意**：脚本使用虚拟环境以符合 PEP 668 规范，避免系统包冲突。
 
 或者手动安装依赖：
 
 ```bash
 # Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install -y build-essential cmake git python3 python3-pip python3-dev
-pip3 install pybind11[global] -r requirements.txt
+sudo apt-get install -y build-essential cmake git python3 python3-pip python3-dev python3-venv
+
+# 创建并激活虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+
+# 安装 Python 依赖
+pip install --upgrade pip
+pip install pybind11[global] -r requirements.txt
 ```
 
 #### 3. 编译 C++ 核心库
 
+如果使用安装脚本，C++ 核心库已经自动编译完成。
+
+如需重新编译，请激活虚拟环境后运行：
+
 ```bash
+source venv/bin/activate
 ./scripts/build.sh
 ```
 
 或手动构建：
 
 ```bash
+source venv/bin/activate
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
 cmake --build . --parallel $(nproc)
@@ -117,6 +133,9 @@ cmake --build . --parallel $(nproc)
 #### 4. 测试核心功能
 
 ```bash
+# 激活虚拟环境（如果未激活）
+source venv/bin/activate
+
 # 运行 C++ 测试程序
 ./build/bin/example_strategy_test
 ```

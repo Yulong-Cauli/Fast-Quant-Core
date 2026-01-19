@@ -1,8 +1,24 @@
 # 快速测试指南
 
+## 0. 安装依赖（首次运行）
+
+如果您还没有安装依赖，请先运行：
+
+```bash
+chmod +x install_dependencies.sh
+./install_dependencies.sh
+```
+
+这将自动安装所有依赖并编译 C++ 核心库。
+
+**Ubuntu 24.04+ 用户**：脚本会创建虚拟环境（venv）以符合系统规范。
+
 ## 1. 编译 C++ 核心库
 
 ```bash
+# 激活虚拟环境（如果尚未激活）
+source venv/bin/activate
+
 # 方法 1: 使用构建脚本（推荐）
 ./scripts/build.sh
 
@@ -31,6 +47,9 @@ cmake --build . --parallel $(nproc)
 ## 3. 测试 Python 绑定
 
 ```bash
+# 激活虚拟环境（如果尚未激活）
+source venv/bin/activate
+
 # 运行演示脚本（无需 Binance API）
 python3 scripts/demo.py
 ```
@@ -46,14 +65,14 @@ FastQuant 核心功能演示
 ## 4. 运行完整系统（需要 Binance API）
 
 ```bash
-# 1. 安装 Python 依赖
-pip3 install -r requirements.txt
+# 激活虚拟环境
+source venv/bin/activate
 
-# 2. 配置 API 密钥
+# 1. 配置 API 密钥
 cp config/config.example.yaml config/config.yaml
 vim config/config.yaml  # 填入你的 API 密钥
 
-# 3. 启动交易机器人
+# 2. 启动交易机器人
 ./scripts/run.sh
 ```
 
@@ -61,9 +80,16 @@ vim config/config.yaml  # 填入你的 API 密钥
 
 ### Q: 编译时找不到 pybind11？
 
+确保已激活虚拟环境：
 ```bash
-pip3 install "pybind11[global]"
+source venv/bin/activate
+# 如果仍然缺少 pybind11
+pip install "pybind11[global]"
 ```
+
+### Q: Ubuntu 24.04 安装时出现 dpkg 错误？
+
+使用新版 `install_dependencies.sh`，它会跳过 GPU 驱动安装，专注于 C++ 编译环境。
 
 ### Q: 如何只测试不连接交易所？
 
